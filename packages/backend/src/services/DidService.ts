@@ -21,10 +21,21 @@ export class DidService {
 
   async registerDid(did: string): Promise<boolean> {
     const newDid = new Did();
+    newDid.id = did;
     newDid.did = did;
-    console.log("Saved new DID:", newDid);
     await this.connection.manager.save(newDid);
     return true;
+  }
+
+  async getDidViaId(id:string): Promise<string|null>{
+    const result = await this.DidRepository.findOne({
+      where:{id}
+    })
+    if(result){
+      const {did}:any = result;
+      return did 
+    }
+    return null
   }
   
   async getAllDids(): Promise<Did[]> {

@@ -46,3 +46,11 @@ export interface UserData {
     twitter?: AccountLinkage;
   };
 }
+
+
+export interface DIDType {
+  id?: string;
+  did?:string;
+}
+
+export interface RequestInit {}

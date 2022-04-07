@@ -1,15 +1,36 @@
 import React from "react";
+import { Box, CircularProgress } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { ProfileLoader } from "./ProfileLoader";
 import { Profile } from "../../types";
+import { CeramicContext } from "../../contexts/";
 
 export default {
   title: "Profiles",
   component: ProfileLoader,
 };
 
-const Template: ComponentStory<typeof ProfileLoader> = () => {
-  const [did, setDid] = React.useState("did:3:kjzl6cwe1jw1466t7qwr0yk4jscjqhy4y7iq7z3om5hyx7dd6xc71yr751vwunw");
+
+const Template: ComponentStory<typeof ProfileLoader>  = () => {
+  const [did, setDid] = React.useState<string|undefined>('');
+  const [loading, setLoading] = React.useState(true);
+  const { ensureConnected, userDid, getUserData} = React.useContext(CeramicContext);
+  ensureConnected();
+
+
+  React.useEffect(() =>{
+    setDid(userDid?.toString());
+    setLoading(false);
+  }, [userDid, getUserData])
+
+
+  if (loading) {
+    return (
+      <Box sx={{ alignItems: "center", display: "flex", justifyContent: "center", padding: "50px 0", width: "100%" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <>

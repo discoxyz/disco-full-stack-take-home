@@ -21,3 +21,7 @@ export interface UserData {
     twitter?: AccountLinkage;
   };
 }
+
+export interface DIDType {
+  did:string;
+}

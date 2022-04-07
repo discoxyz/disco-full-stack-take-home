@@ -1,10 +1,12 @@
-import { Profile } from "../types";
+import {DIDType, Profile, RequestInit } from "../types";
+
 
 export enum ApiPath {
   REGISTER_DID = "/v1/did/register/",
   GET_PROFILE_VIA_DID = "/v1/did/getProfileViaDid/",
   GET_ALL_DIDS = "/v1/did/getAllDids",
   GET_ALL_PROFILES = "/v1/did/getAllProfiles",
+  GET_DID_VIA_ID = "/v1/did/getDidViaId/"
 }
 
 export class ApiService {
@@ -13,26 +15,39 @@ export class ApiService {
 
   constructor() {}
 
-  public async registerDid(did: string): Promise<boolean> {
-    return this.request(this.api.REGISTER_DID + did, "POST");
+
+  public async registerDid(body: DIDType): Promise<boolean> {
+    return this.request(this.api.REGISTER_DID, "POST", body);
   }
 
   public async getProfileViaDid(did: string): Promise<Profile> {
-    return this.request(this.api.GET_PROFILE_VIA_DID + did);
+    return this.request(this.api.GET_PROFILE_VIA_DID + did, "GET");
   }
 
   public async getAllDids(): Promise<string[]> {
-    return this.request(this.api.GET_ALL_DIDS);
+    return this.request(this.api.GET_ALL_DIDS, "GET");
+  }
+
+  public async getDidViaId(body: DIDType): Promise<boolean> {
+    return this.request(this.api.GET_DID_VIA_ID, "POST", body);
   }
 
   public async getAllProfiles(): Promise<Profile[]> {
-    return this.request(this.api.GET_ALL_PROFILES);
+    return this.request(this.api.GET_ALL_PROFILES, "GET");
   }
 
-  private async request(path: string, method: "GET" | "DELETE" | "PUT" | "POST" = "GET"): Promise<any> {
-    const response = await fetch(`${this.url}${path}`, {
-      method,
-    });
+  private async request(path:string, method: string,
+    data?: DIDType ): Promise<any> {
+    
+    const config:RequestInit = {
+      method: method,
+      body: data ? JSON.stringify(data): undefined,
+      headers: {
+          'Content-Type': data ? 'application/json': undefined,
+      }
+    }
+    const response = await fetch(`${this.url}${path}`, config);
+
     const responseIsJson = response.headers.get("content-type")?.indexOf("application/json") === 0;
 
     if (!response.ok) {

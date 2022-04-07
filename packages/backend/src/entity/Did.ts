@@ -1,12 +1,12 @@
 import {Maximum, MaxLength, Minimum, Property, Required} from "@tsed/schema";
-import {Entity, PrimaryGeneratedColumn, Column} from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, PrimaryColumn} from "typeorm";
 
 @Entity()
 export class Did {
 
-    @PrimaryGeneratedColumn()
+    @PrimaryColumn()
     @Property()
-    id: number;
+    id: string;
 
     @Column()
     @MaxLength(100)
