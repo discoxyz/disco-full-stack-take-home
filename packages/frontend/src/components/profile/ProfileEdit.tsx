@@ -5,26 +5,36 @@ import { Box, Button, FormControl, TextField, Typography, CircularProgress } fro
 import { DidView } from "../DidView";
 
 export interface ProfileEditProps {
-  onSaveComplete?(): void;
+  onSaveComplete?(userDid : string): Promise<boolean>;
 }
+
+const SAVE_DEFAULT_STATUS = 0;
+const SAVE_LOADING_STATUS = 1;
+const SAVE_SUCCESS_STATUS = 2;
+const SAVE_ERROR_STATUS = 3;
 
 export const ProfileEdit: React.FC<ProfileEditProps> = (props) => {
   const { ensureConnected, userDid, userData, updateUserData, isConnected, isLoadingUserData } =
     React.useContext(CeramicContext);
   ensureConnected();
-  const [loading, setLoading] = React.useState(false);
   const [profile, setProfile] = React.useState<Profile>({});
+  const [saveSuccessStatus, setSaveSuccess] = React.useState(SAVE_DEFAULT_STATUS);
 
   React.useEffect(() => {
     setProfile(userData.profile || {});
   }, [userData]);
 
   async function saveProfile() {
-    setLoading(true);
-    await updateUserData({ profile });
-    setLoading(false);
-    props.onSaveComplete && props.onSaveComplete();
-    console.log("[ProfileEdit] Successfully updated user data for DID", userDid);
+    try {
+      setSaveSuccess(SAVE_LOADING_STATUS)
+      await updateUserData({ profile });
+      userDid && props.onSaveComplete && await props.onSaveComplete(userDid);
+      setSaveSuccess(SAVE_SUCCESS_STATUS)
+      console.log("[ProfileEdit] Successfully updated user data for DID", userDid);
+    } catch (e) {
+      console.error("saveProfile error caught!", e)
+      setSaveSuccess(SAVE_ERROR_STATUS)
+    }
   }
 
   if (isLoadingUserData) {
@@ -35,13 +45,16 @@ export const ProfileEdit: React.FC<ProfileEditProps> = (props) => {
     );
   }
 
+  const isLoading = saveSuccessStatus === SAVE_LOADING_STATUS
+
   return (
     <Box>
-      <Box mb={3}>
-        <Typography variant="h4">Edit Profile</Typography>
-        <DidView did={userDid} typographyVariant="body2" copy dontTruncate />
-      </Box>
-
+      {userDid &&
+        <Box mb={3}>
+          <Typography variant="h4">Edit Profile</Typography>
+          <DidView did={userDid} typographyVariant="body2" copy dontTruncate />
+        </Box>
+      }
       <FormControl fullWidth sx={{ marginBottom: 3 }}>
         <Typography variant="h6">Add a profile image</Typography>
         <Typography variant="body2" sx={{ marginBottom: 1 }}>
@@ -90,9 +103,11 @@ export const ProfileEdit: React.FC<ProfileEditProps> = (props) => {
       </FormControl>
 
       <Box>
-        <Button onClick={saveProfile} disabled={loading || !isConnected} variant="contained">
-          {loading ? <CircularProgress size="20px" /> : "Save Profile"}
+        <Button onClick={saveProfile} disabled={isLoading || !isConnected} variant="contained">
+          {isLoading ? <CircularProgress size="20px" /> : "Save Profile"}
         </Button>
+        {saveSuccessStatus === SAVE_ERROR_STATUS && <p style={{color: "red" }} >There was an error saving the profile! Please try again later.</p>}
+        {saveSuccessStatus === SAVE_SUCCESS_STATUS && <p style={{color: "green" }} >Profile saved successfully!</p>}
       </Box>
     </Box>
   );

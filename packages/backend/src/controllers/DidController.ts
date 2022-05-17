@@ -9,44 +9,41 @@ import { getProfileFromCeramic } from "../common/ceramic-util";
 @Controller("/did")
 export class GetProfileController {
 
-  constructor(private readonly DidService: DidService) {
+  constructor(private readonly didService: DidService) {
 
   }
 
   @Get("/getAllDids")
   @Summary("Return the DIDs of all Disco users")
   async getAllDids(): Promise<string[]> {
-    const result = await this.DidService.getAllDids();
+    const result = await this.didService.getAllDids();
     return result.map(r => r.did);
   }
 
   @Post("/register/:did")
   @Summary("Register the given DID as a Disco user")
   async registerDid(@PathParams("did") did: string): Promise<boolean> {
-    console.log("@TODO: Implement me using this.DidService");
-    const result = this.DidService.registerDid(did);
-
-    return true;
+    const dids = await this.getAllDids();
+    if (dids.find((entry) => {return entry === did})) return true;
+    return this.didService.registerDid(did);
   }
 
   @Get("/getProfileViaDid/:did")
-  @Summary("Retrive the profile for a given DID")
+  @Summary("Retrieve the profile for a given DID")
   async getProfileViaDid(@PathParams("did") did: string): Promise<Profile | undefined> {
-    // example call: http://0.0.0.0:8083/v1/did/getProfileViaDid/did:3:kjzl6cwe1jw148uyox3goiyrwwe3aab8vatm3apxqisd351ww0dj6v5e3f61e8b
-
-    return await getProfileFromCeramic(did);
+    return getProfileFromCeramic(did);
   }
 
   @Get("/getAllProfiles")
-  @Summary("Retrive the profiles of all Disco users")
+  @Summary("Retrieve the profiles of all Disco users")
   async getAllProfiles(): Promise<Profile[]> {
-    const result = this.DidService.getAllDids();
-
-    console.log("@TODO: Using stub implementation with hard-coded profile fetch. Implement me!");
-
-    const profile = await getProfileFromCeramic("did:3:kjzl6cwe1jw148uyox3goiyrwwe3aab8vatm3apxqisd351ww0dj6v5e3f61e8b");
-
-    return [profile!];
+    const profiles : Profile[] = [];
+    const dids : Did[] = await this.didService.getAllDids();
+    for (const did of dids) {
+      const profile = await getProfileFromCeramic(did.did);
+      if (profile) profiles.push(profile);
+    }
+    return profiles;
   }
 
 }

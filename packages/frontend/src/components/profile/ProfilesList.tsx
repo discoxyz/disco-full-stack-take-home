@@ -2,21 +2,35 @@ import * as React from "react";
 import { Box, CircularProgress } from "@mui/material";
 
 import { ProfileView } from "./ProfileView";
-import { ProfileLoader } from "./ProfileLoader";
 import { ApiService } from "../../utils/ApiService";
+import {Profile} from "../../types";
 
-export const ProfilesList: React.FC = (props) => {
-  const [loading, setLoading] = React.useState(true);
+const DEFAULT_LOAD_STATUS = 0;
+const LOADING_LOAD_STATUS = 1;
+const ERROR_LOAD_STATUS = 2;
+
+export const ProfilesList: React.FC = () => {
+  const [loadStatus, setLoadStatus] = React.useState(DEFAULT_LOAD_STATUS);
+  const [profiles, setProfiles] = React.useState<Profile[]>([]);
+  const [dids, setDids] = React.useState<string[]>([]);
 
   const api = React.useMemo(() => new ApiService(), []);
-  // @NOTE: Example api usage:
-  // console.log(await api.getProfileViaDid("did:3:kjzl6cwe1jw148uyox3goiyrwwe3aab8vatm3apxqisd351ww0dj6v5e3f61e8b"));
 
-  throw new Error(
-    "@TODO: Please implement me using ApiService and ProfileView or ProfileLoader! This component should display all of the profiles one after the other.",
-  );
+  React.useEffect(() => {
+    setLoadStatus(LOADING_LOAD_STATUS)
+    api.getAllDids().then((getAllDidsResult) => {
+      setDids(getAllDidsResult)
+      api.getAllProfiles().then((getAllProfilesResult) => {
+        setProfiles(getAllProfilesResult)
+        setLoadStatus(DEFAULT_LOAD_STATUS)
+      })
+    }).catch((e) => {
+      console.error("ProfilesList useEffect error caught!", e);
+      setLoadStatus(ERROR_LOAD_STATUS)
+    })
+  }, []);
 
-  if (loading) {
+  if (loadStatus === LOADING_LOAD_STATUS) {
     return (
       <Box sx={{ alignItems: "center", display: "flex", justifyContent: "center", padding: "50px 0", width: "100%" }}>
         <CircularProgress />
@@ -26,7 +40,17 @@ export const ProfilesList: React.FC = (props) => {
 
   return (
     <Box>
-      Coming soon!
+      {profiles.length === 0 && <p>No profiles found!</p>}
+      {profiles.length > 0 &&
+        <ul>
+          {profiles.map((profile, index) =>
+              <li key={dids[index]}>
+                <ProfileView profile={profile} did={dids[index]} />
+              </li>
+          )}
+        </ul>
+      }
+      {loadStatus === ERROR_LOAD_STATUS && <p style={{color: "red" }} >There was an error loading the saved profiles! Please refresh the page later.</p>}
     </Box>
   );
 };
